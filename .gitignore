@@ -127,3 +127,20 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# LaTeX output files
+*.aux
+*.log
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+*.toc
+*.bbl
+*.blg
+*.out
+*.nav
+*.snm
+*.vrb
+
+# macOS specific files to ignore
+**/.DS_Store
