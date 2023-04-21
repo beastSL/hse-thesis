@@ -8,7 +8,7 @@ First, we would like to note there are no formal definitions of subjectivity and
 ### Types of subjectivity
 Subjectivity is an expression that represents opinions, beliefs, thoughts, feelings, emotions, goals, evaluations, and/or judgments (we'll use the expression "private states" to generalize these concepts). One key sign of it is that it is not open to objective observation or verification. Subjective expressions are the ones that cannot be refuted or confirmed.
 
-The three main types of subjectivity are:
+The main types of subjectivity are:
 - direct mentions of private state. This is the easiest-to-spot sign of subjectivity, and it includes words that directly indicate private states. Examples:
   - The U.S. fears a spill-over.
   - I really enjoyed the book I read last night.
@@ -18,15 +18,21 @@ The three main types of subjectivity are:
   - The report is full of absurdities.
   - The sunset painted the sky with a fiery orange hue.
 
-  We think these sentences are subjective, because the expressions "full of absurdities" and "fiery orange hue" represent the writers opinions or emotions.
-- subjective speech events. When labeling the sentences which contain direct or indirect speech, you should not base your judgment on the contents of the speech. Instead, you should base your judgments on the words the point to the speech, such as "said" or "called", as well as the other parts of the sentence. Examples:
-  - Sargeant O’Leary said the incident took place at 2:00pm.
-  - Defence officials accused Beijing of using President Tsai's US visit as an "excuse to conduct military exercises".
-
-  Here, we think the first sentence is objective, because the word "said" does not indicate any private states, and the second sentence in subjective, because the word "accused" does indicate accusation, which is a belief.
+  We think these sentences are subjective, because the expressions "full of absurdities" and "fiery" represent the writer's opinions or emotions.
 
 Note that this is not an exhaustive list of subjectivity types. In some cases, you'll need to apply your intuition and appeal to the reaction a sentence gives you.
 
+### Subjectivity when describing private states of a third party
+A common case is sentences describing private states (opinions, emotions, etc.) of a third party. One good example of such a description is direct or indirect speech (see the first two examples). Here are some examples of such sentences:
+- Sargeant O’Leary said the incident took place at 2:00pm.
+- Defence officials accused Beijing of using President Tsai's US visit as an "excuse to conduct military exercises".
+- These people remember the horrors of World War II.
+
+When annotating such sentences, you should not base your judgment on the private states of the third party themselves (e.g. "the incident took place at 2:00pm"). Instead, you should base your judgments on how these descriptions are presented in the sentence, and whether a certain tone is given to the private states. For example, words like "say", "know", "want" are neutral, while words like "fear" and "accuse" give an intonation to the private states. Note that this way we are incentivizing you to spot specifically the writer's subjectivity.
+
+We think sentences 1 and 3 are objective, because the words "said" and "remember" sound neutral, and the second sentence in subjective, because the word "accused" does indicate a tone of accusation.
+
+### Objective sentences
 The sentences that do not contain any subjectivity above and that present statements are considered objective. Note that these statements are not necessarily correct. Some examples:
 - The Earth is flat.
 - The Dow Jones Industrial Average closed at 34,035.99 points on Monday.
@@ -34,7 +40,7 @@ The sentences that do not contain any subjectivity above and that present statem
 ### Other important advice
 The other important things we need to mention before describing the exact task:
 - There are no fixed rules about how particular words should be annotated. The instructions describe the annotations of specific examples, but do not state that specific words should always be annotated a certain way.
-- Sentences should be interpreted with respect to the contexts in which they appear. The annotators should not take sentences out of context and think
+- Sentences should be interpreted with respect to the contexts in which they appear. You should not take sentences out of context and think
 what they could mean, but rather should judge them as they are being used in that particular sentence and document.
 - It is impossible to cover all types of sentences in this instruction. For example, there could be sentences containing both objective and subjective elements. The subjective elements can also play a minor role in the sentence. You should base your judgment on your inner reaction and intuition after reading a sentence.
 
@@ -43,11 +49,13 @@ You will be consequently given sentences from a newspaper. Every sentence will b
 
 Please note that some sentences might contain explicit language, since the papers were scraped from the Internet.
 
-Your task is to assign each sentence a subjectivity score. The score will be measured on a discrete scale from 1 to 5. 1 corresponds to a completely objective sentence, 5 -- to a completely subjective one. You will also be given an option to assign an "Not Applicable" label. Here are the explanations of the scale (also, see below for examples):
-- "Not Applicable" label is used when the instruction does not cover the sentence. Note that since scraping the data contains some amount of noise, you should put the "Not Applicable" label if the sentence fully consists of noise. Other cases for the "Not Applicable" label are incomplete sentences, questions and sentences that don't contain any statements.
-- Scores 1 and 5 should be assigned when you are confident that the sentence is objective or subjective.
-- Scores 2 and 4 should be assigned when you are unconfident but suspect that the sentence is objective or subjective.
-- Score 3 should be assigned if a sentence presents a statement but it is difficult to say whether the sentence is objective or subjective.
+Your task is to assign each sentence a subjectivity score. The score will be measured on a discrete scale from 1 to 5. You will also be given an option to assign an "Not Applicable" label. Here are the explanations of the scale:
+- "Not Applicable" label is used when a sentence does not contain any statements, and therefore it is impossible to say if it is subjective or objective. Some cases for the "Not Applicable" label are incomplete sentences, questions and sentences fully consisting of noise. (see below for examples)
+- Score 1 should be assigned when you are confident that the sentence is objective.
+- Score 2 should be assigned if you are unconfident but suspect that the sentence is objective.
+- Score 3 should be assigned if a sentence presents a statement but it is difficult to say whether the sentence is objective or subjective. Note that this option corresponds to the case when neither the instruction nor the intuition can help to decide if the sentence is subjective or objective, even though it is applicable to the annotation.
+- Score 4 should be assigned if you are unconfident but suspect that the sentence is subjective.
+- Score 5 should be assigned when you are confident that the sentence is subjective.
 
 In the end, we'd like to provide some examples of the sentences for each score.
 - Not Applicable: 
@@ -71,4 +79,4 @@ In the end, we'd like to provide some examples of the sentences for each score.
   - The performance of the athlete was impressive, especially considering the challenging weather conditions.
 - Score 5
   - I was amazed by the new album of Arctic Monkeys.
-  - I strongly believe that everyone should have access to quality healthcare, and it's a fundamental human right.
+  - The U.S. fears a spill-over.
