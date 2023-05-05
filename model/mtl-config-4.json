@@ -1,0 +1,24 @@
+{
+    "main-task": {
+        "data-dir": "datasets/nsdc",
+        "type": "classification",
+        "num-labels": 4
+    },
+    "additional-tasks": [
+        {
+            "data-dir": "datasets/wikipedia",
+            "type": "classification",
+            "num-labels": 2
+        },
+        {
+            "data-dir": "datasets/subj",
+            "type": "classification",
+            "num-labels": 2
+        },
+        {
+            "data-dir": "datasets/imdb",
+            "type": "classification",
+            "num-labels": 2
+        }
+    ]
+}

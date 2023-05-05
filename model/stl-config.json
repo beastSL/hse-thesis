@@ -1,0 +1,9 @@
+{
+    "main-task": {
+        "data-dir": "datasets/nsdc",
+        "type": "classification",
+        "num-labels": 4
+    },
+    "additional-tasks": [
+    ]
+}

@@ -1,0 +1,39 @@
+{
+    "main-task": {
+        "data-dir": "datasets/nsdc",
+        "type": "classification",
+        "num-labels": 4
+    },
+    "additional-tasks": [
+        {
+            "data-dir": "datasets/wikipedia",
+            "type": "classification",
+            "num-labels": 2
+        },
+        {
+            "data-dir": "datasets/subj",
+            "type": "classification",
+            "num-labels": 2
+        },
+        {
+            "data-dir": "datasets/imdb",
+            "type": "classification",
+            "num-labels": 2
+        },
+        {
+            "data-dir": "datasets/qnli",
+            "type": "classification",
+            "num-labels": 2
+        },
+        {
+            "data-dir": "datasets/snli",
+            "type": "classification",
+            "num-labels": 3
+        },
+        {
+            "data-dir": "datasets/sts-b",
+            "type": "regression",
+            "num-labels": 1
+        }
+    ]
+}

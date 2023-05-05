@@ -7,6 +7,7 @@ from tokenizers.models import BPE
 from tokenizers.pre_tokenizers import Whitespace
 from torch.utils.data import Dataset
 from torch.nn.utils.rnn import pad_sequence
+from tqdm import tqdm
 import torch
 
 import pandas as pd
@@ -18,7 +19,7 @@ class SpecialTokens(Enum):
     BEGINNING = "[BOS]"
     END = "[EOS]"
 
-class TranslationDataset(Dataset):
+class MyDataset(Dataset):
     def __init__(
         self,
         file_path,
@@ -44,10 +45,12 @@ class TranslationDataset(Dataset):
         self.tokenized = []
         self.labels = []
         lines = pd.read_csv(file_path)['text'].values
-        labels = pd.read_csv(file_path)['is_subjective'].values
-        for line, label in zip(lines, labels):
+        labels = pd.read_csv(file_path)['score'].values
+        progress_bar = tqdm(list(zip(lines, labels)))
+        progress_bar.set_description(f"Read the {file_path} corpus")
+        for line, label in progress_bar:
             tokenized = tokenizer.encode(line.strip())
-            if len(tokenized) > max_len:
+            if len(tokenized) + 2 > max_len:
                 continue
             self.tokenized.append(
                 [self.special_tokens[SpecialTokens.BEGINNING.value]] + 
@@ -70,7 +73,7 @@ class TranslationDataset(Dataset):
         Given a batch of examples with varying length, collate it into `source` and `target` tensors for the model.
         This method is meant to be used when instantiating the DataLoader class for training and validation datasets in your pipeline.
         """
-        targets = torch.Tensor([sample[1] for sample in batch]).type(torch.LongTensor)
+        targets = torch.Tensor([sample[1] for sample in batch])
         source = [torch.Tensor(sample[0]) for sample in batch]
         source = pad_sequence(
             source,
@@ -93,25 +96,3 @@ class TranslationDataset(Dataset):
             [2, 17, 18, 3, PAD_IDX]
         ])
         assert torch.all(source == source_true), targets == torch.Tensor([1, 0, 1])
-
-
-def train_tokenizers(base_dir: Path, save_dir: Path):
-    """
-    Trains tokenizers for source and target languages and saves them to `save_dir`.
-    :param base_dir: Directory containing processed training and validation data (.txt files from `convert_files`)
-    :param save_dir: Directory for storing trained tokenizer data (two files: `tokenizer_de.json` and `tokenizer_en.json`)
-    """
-    tokenizer = Tokenizer(BPE(unk_token=SpecialTokens.UNKNOWN.value))
-    tokenizer.pre_tokenizer = Whitespace()
-    trainer = BpeTrainer(special_tokens=[
-        SpecialTokens.UNKNOWN.value, 
-        SpecialTokens.PADDING.value, 
-        SpecialTokens.BEGINNING.value, 
-        SpecialTokens.END.value
-    ])
-    lines = np.concatenate([
-        pd.read_csv(base_dir / "train.csv")['text'].values,
-        pd.read_csv(base_dir / "val.csv")['text'].values
-    ])
-    tokenizer.train_from_iterator(lines, trainer=trainer, length=len(lines))
-    tokenizer.save(str(save_dir) + "/tokenizer.json")
