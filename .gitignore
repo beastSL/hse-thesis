@@ -144,3 +144,6 @@ dmypy.json
 
 # macOS specific files to ignore
 **/.DS_Store
+
+# Ignore PyTorch checkpoints
+**/*.pth
