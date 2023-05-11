@@ -8,6 +8,7 @@ from transformers import AutoModelForSequenceClassification
 from transformers import BertTokenizer
 import wandb
 from model import SequenceClassificationModel
+from sklearn.metrics import f1_score, accuracy_score
 
 class Trainer:
     def __init__(
@@ -89,28 +90,32 @@ class Trainer:
     def evaluate(self, val_or_test="val"):
         if val_or_test == "val":
             eval_dataloader = self.val_dataloader
-            eval_dataset = self.val_dataset
         elif val_or_test == "test":
             eval_dataloader = self.test_dataloader
-            eval_dataset = self.test_dataset
         else:
             raise "You should pass 'val' or 'test' into val_or_test"
         self.model.eval()
         losses = 0
         progress_bar = tqdm(eval_dataloader, leave=False)
         progress_bar.set_description(f"Evaluate model on {self.data_dir_for_debug}")
-        correct = 0
+        pred_labels = []
+        tgt_labels = []
         for idx, (src, tgt) in enumerate(progress_bar):
             if self.task_type == "classification":
                 tgt = tgt.type(torch.LongTensor)
             src, tgt = src.to(self.device), tgt.to(self.device)
             preds = self.model(src)
+            pred_labels.append(torch.argmax(preds, dim=1))
+            tgt_labels.append(tgt)
             loss = self.criterion(preds, tgt)
             losses += loss.item()
-            correct += torch.count_nonzero((torch.argmax(preds, dim=1) == tgt).type(torch.LongTensor))
             if idx % 10 == 0:
                 progress_bar.set_postfix(loss=loss.item())
-        return losses / len(eval_dataloader), correct / len(eval_dataset)
+        pred_labels = torch.hstack(pred_labels).cpu().numpy()
+        tgt_labels = torch.hstack(tgt_labels).cpu().numpy()
+        return losses / len(eval_dataloader), \
+            f1_score(tgt_labels, pred_labels, average='macro'), \
+            accuracy_score(tgt_labels, pred_labels)
 
     def update_optimizer(self, optimizer_params, one_cycle_policy=False, num_epochs=None, scheduler_params=None):
         self.optimizer = torch.optim.Adam(self.model.parameters(), **optimizer_params)
@@ -188,26 +193,30 @@ class MultiTaskTrainer:
                             additional_trainer.optimizer.param_groups[0]['lr']
                     })
                 train_loss = self.main_trainer.train_epoch()
-                val_loss, val_accuracy = self.main_trainer.evaluate("val")
-                wandb.log({
+                val_loss, val_f1_score, val_accuracy = self.main_trainer.evaluate("val")
+                log_data = {
                     f"{self.main_trainer.data_dir_for_debug}/Train CrossEntropyLoss": train_loss,
+                    f"{self.main_trainer.data_dir_for_debug}/Val F1-score": val_f1_score,
                     f"{self.main_trainer.data_dir_for_debug}/Val Accuracy": val_accuracy,
                     f"{self.main_trainer.data_dir_for_debug}/Val CrossEntropyLoss":val_loss,
                     f"{self.main_trainer.data_dir_for_debug}/Learning rate": 
                     self.main_trainer.optimizer.param_groups[0]['lr']}
-                )
+                wandb.log(log_data)
                 torch.save(self.main_trainer.model.state_dict(), f"pretrain_epoch_{epoch}.pth")
             wandb.finish()
 
         wandb.init(project="Subjectivity-detection-in-news-articles")
         if pretrained_mtl is not None:
             self.main_trainer.model.load_state_dict(torch.load(pretrained_mtl, map_location=self.main_trainer.device))
-            val_loss, val_accuracy = self.main_trainer.evaluate("val")
-            wandb.log({
+            val_loss, val_f1_score, val_accuracy = self.main_trainer.evaluate("val")
+            log_data = {
+                "Val F1-score": val_f1_score,
                 "Val Accuracy": val_accuracy,
                 "Val CrossEntropyLoss":val_loss,
                 "Learning rate": self.main_trainer.optimizer.param_groups[0]['lr']
-            })
+            }
+            print(log_data)
+            wandb.log(log_data)
             torch.save(self.main_trainer.model.state_dict(), "checkpoint_best.pth")
             min_val_loss = val_loss
         else:
@@ -221,13 +230,17 @@ class MultiTaskTrainer:
             )
         for epoch in trange(1, num_epochs_main + 1):
             train_loss = self.main_trainer.train_epoch()
-            val_loss, val_accuracy = self.main_trainer.evaluate("val")
-            wandb.log({
+            val_loss, val_f1_score, val_accuracy = self.main_trainer.evaluate("val")
+            log_data = {
                 "Train CrossEntropyLoss": train_loss,
-                "Val Accuracy": val_accuracy,
+                "Val F1-score": val_f1_score,
+                "Val Accuracy": val_f1_score,
                 "Val CrossEntropyLoss":val_loss,
                 "Learning rate": self.main_trainer.optimizer.param_groups[0]['lr']
-            })
+            }
+            print(log_data)
+            print(val_f1_score)
+            wandb.log(log_data)
             if val_loss < min_val_loss:
                 print(f"New best loss {val_loss} on epoch {epoch}! Saving checkpoint")
                 torch.save(self.main_trainer.model.state_dict(), "checkpoint_best.pth")
@@ -239,7 +252,7 @@ class MultiTaskTrainer:
 
         # load the best checkpoint
         self.main_trainer.model.load_state_dict(torch.load("checkpoint_best.pth", map_location=self.main_trainer.device))
-        _, test_accuracy = self.main_trainer.evaluate("test")
-        print(f"Test accuracy on the best model: {test_accuracy}")
+        _, test_f1_score, test_accuracy = self.main_trainer.evaluate("test")
+        print(f"Test F1-score on the best model: {test_f1_score}, accuracy: {test_accuracy}")
 
         return self.main_trainer.model
