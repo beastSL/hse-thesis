@@ -1,17 +1,12 @@
 from enum import Enum
-from pathlib import Path
 
 from tokenizers import Tokenizer
-from tokenizers.trainers import BpeTrainer
-from tokenizers.models import BPE
-from tokenizers.pre_tokenizers import Whitespace
 from torch.utils.data import Dataset
 from torch.nn.utils.rnn import pad_sequence
 from tqdm import tqdm
 import torch
 
 import pandas as pd
-import numpy as np
 
 class SpecialTokens(Enum):
     UNKNOWN = "[UNK]"
