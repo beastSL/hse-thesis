@@ -17,22 +17,23 @@ def train_model(config_path):
         "lr": 2e-5,
         "betas": (0.9, 0.98)
     }
-    shared_one_cycle_policy=False
+    model_name = 'bert-base-cased'
+    num_epochs_main = 5
+    shared_one_cycle_policy = False
     num_shared_epochs = 0
-    scheduler_params = {
-        "max_lr": 2e-4,
-        "three_phase": True
-    }
+    scheduler_params = {"max_lr": 1e-4}
     multi_task_trainer = MultiTaskTrainer(
         config,
         optimizer_params,
         batch_size,
         max_len,
+        model_name,
         shared_one_cycle_policy,
         num_shared_epochs,
         scheduler_params
     )
-    multi_task_trainer.train(num_epochs_main=5)
+    multi_task_trainer.train(num_epochs_main=num_epochs_main)
+
 
 if __name__ == "__main__":
     parser = ArgumentParser()

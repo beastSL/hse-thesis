@@ -137,6 +137,7 @@ class MultiTaskTrainer:
         optimizer_params,
         batch_size,
         max_len,
+        model_name,
         shared_one_cycle_policy=False,
         num_shared_epochs=5,
         scheduler_params=None
@@ -146,9 +147,9 @@ class MultiTaskTrainer:
         torch.manual_seed(0)
 
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+        tokenizer = BertTokenizer.from_pretrained(model_name)
 
-        huggingface_model = AutoModelForSequenceClassification.from_pretrained("bert-base-uncased")
+        huggingface_model = AutoModelForSequenceClassification.from_pretrained(model_name)
         backbone_model = huggingface_model.bert
         huggingface_model.to(device)
 
@@ -218,9 +219,9 @@ class MultiTaskTrainer:
             print(log_data)
             wandb.log(log_data)
             torch.save(self.main_trainer.model.state_dict(), "checkpoint_best.pth")
-            min_val_loss = val_loss
+            max_val_f1_score = val_f1_score
         else:
-            min_val_loss = float("inf")
+            max_val_f1_score = float("-inf")
         if one_cycle_policy:
             self.main_trainer.update_optimizer(
                 self.optimizer_params_for_update,
@@ -234,17 +235,15 @@ class MultiTaskTrainer:
             log_data = {
                 "Train CrossEntropyLoss": train_loss,
                 "Val F1-score": val_f1_score,
-                "Val Accuracy": val_f1_score,
+                "Val Accuracy": val_accuracy,
                 "Val CrossEntropyLoss":val_loss,
                 "Learning rate": self.main_trainer.optimizer.param_groups[0]['lr']
             }
-            print(log_data)
-            print(val_f1_score)
             wandb.log(log_data)
-            if val_loss < min_val_loss:
-                print(f"New best loss {val_loss} on epoch {epoch}! Saving checkpoint")
+            if val_f1_score > max_val_f1_score:
+                print(f"New best f1_score {val_f1_score} on epoch {epoch}! Saving checkpoint")
                 torch.save(self.main_trainer.model.state_dict(), "checkpoint_best.pth")
-                min_val_loss = val_loss
+                max_val_f1_score = val_f1_score
 
             # and the last one in case you need to recover
             # by the way, is this sufficient?
@@ -255,4 +254,5 @@ class MultiTaskTrainer:
         _, test_f1_score, test_accuracy = self.main_trainer.evaluate("test")
         print(f"Test F1-score on the best model: {test_f1_score}, accuracy: {test_accuracy}")
 
+        wandb.finish()
         return self.main_trainer.model

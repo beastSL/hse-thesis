@@ -1,6 +1,6 @@
 {
     "main-task": {
-        "data-dir": "datasets/nsdc",
+        "data-dir": "datasets/nsdc_without_neutrality",
         "type": "classification",
         "num-labels": 4
     },
