@@ -32,27 +32,30 @@ def predict(model, dataloader, device):
     return preds
 
 def save_html(rundir, title, image_url, main_text, preds):
-    head = """<head>
-<title>Green and Red Background Color Example</title>
+    head = f"""<head>
+<title>{title if title is not None else "Labeled text"}</title>
 <style>
-    .green-background {
+    .green-background {{
         background-color: rgb(200, 255, 200);
-    }
+    }}
 
-    .red-background {
+    .red-background {{
         background-color: rgb(255, 200, 200);
-    }
+    }}
 
-    .yellow-background {
+    .yellow-background {{
         background-color: rgb(255, 255, 150);
-    }
+    }}
 </style>
+<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+<meta content="utf-8" http-equiv="encoding">
 </head>
 """ 
-    body = f"""<body>
-<h1>{title}</h1>
-<img src="{image_url}">
-"""
+    body = "<body>"
+    if title is not None:
+        body += f'\n<h1>{title}</h1>'
+    if image_url is not None:
+        body += f'\n<img src="{image_url}">'
     sentence_id = 0
     for paragraph in main_text:
         current_pred = -1
@@ -90,33 +93,44 @@ def save_html(rundir, title, image_url, main_text, preds):
 """
     with open(rundir / "index.html", "w") as fout:
         print(html, file=fout)
-    
 
-def label_webpage(url, rundir):
-    article = NewsPlease.from_url(url)
-    title = article.title.replace('‘', "'").replace('’', "'").replace("“", '"').replace("”", '"')
-    main_text = article.maintext.replace('‘', "'").replace('’', "'").replace("“", '"').replace("”", '"')
-    main_text = list(map(sent_tokenize, main_text.split('\n')))
-    image_url = article.image_url
+def label_text(main_text):
     flattened_main_text = sum(main_text, [])
-    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+    tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
     dataset = MyDataset(flattened_main_text, tokenizer, max_len=512)
     dataloader = DataLoader(
         dataset,
         batch_size=1,
         collate_fn=dataset.collate_translation_data
     )
-    huggingface_model = AutoModelForSequenceClassification.from_pretrained("bert-base-uncased")
+    huggingface_model = AutoModelForSequenceClassification.from_pretrained("bert-base-cased")
     backbone_model = huggingface_model.bert
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     huggingface_model.to(device)
     model = SequenceClassificationModel(backbone_model, 4).to(device)
     model.load_state_dict(torch.load("model/checkpoint_best.pth", map_location=device))
-    preds = predict(model, dataloader, device)
-    print(preds)
-    save_html(rundir, title, image_url, main_text, preds)
+    return predict(model, dataloader, device)
+
+def host_server(rundir):
     os.chdir(rundir)
     os.system('python3 -m http.server')
+
+def label_webpage(url, rundir):
+    article = NewsPlease.from_url(url)
+    main_text = article.maintext.replace('‘', "'").replace('’', "'").replace("“", '"').replace("”", '"')
+    main_text = list(map(sent_tokenize, main_text.split('\n')))
+    preds = label_text(main_text)
+    title = article.title.replace('‘', "'").replace('’', "'").replace("“", '"').replace("”", '"')
+    image_url = article.image_url
+    save_html(rundir, title, image_url, main_text, preds)
+    host_server(rundir)
+
+def label_file(filepath, rundir):
+    with open(filepath, 'r') as fin:
+        main_text = list(map(lambda x : sent_tokenize(x.replace('‘', "'").replace('’', "'").replace("“", '"').replace("”", '"').strip()), fin.readlines()))
+    preds = label_text(main_text)
+    save_html(rundir, title=None, image_url=None, main_text=main_text, preds=preds)
+    host_server(rundir)
 
 if __name__ == "__main__":
     parser = ArgumentParser()
@@ -124,8 +138,16 @@ if __name__ == "__main__":
         "--url", type=str, help="URL of the page that you want to label"
     )
     parser.add_argument(
+        "--file-path", type=str, help="Path of the file that you want to label. A limitation: each paragraph should be fully on one line."
+    )
+    parser.add_argument(
         "--rundir", type=Path, help="Directory from which to run a HTTP server"
     )
     args = parser.parse_args()
 
-    label_webpage(args.url, args.rundir)
+    if args.url is not None:
+        label_webpage(args.url, args.rundir)
+    elif args.file_path is not None:
+        label_file(args.file_path, args.rundir)
+    else:
+        print("You need to provide URL or a file path")
